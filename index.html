@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bible Memory Match - Daniel's Journey | Raamatun Muistipeli - Danielin Matka</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .game-container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .language-bar {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 10px;
+        }
+
+        .lang-btn {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+            padding: 8px 16px;
+            border-radius: 5px;
+            margin: 0 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .lang-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .score-board {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f0f0f0;
+            border-radius: 10px;
+        }
+
+        .score-item {
+            text-align: center;
+        }
+
+        .score-label {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .score-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 30px;
+            cursor: pointer;
+            transition: transform 0.3s;
+            position: relative;
+        }
+
+        .card:hover {
+            transform: scale(1.05);
+        }
+
+        .card.flipped {
+            background: white;
+            border: 2px solid #667eea;
+        }
+
+        .card.matched {
+            background: #4CAF50;
+            border: 2px solid #45a049;
+            cursor: default;
+        }
+
+        .card-content {
+            display: none;
+        }
+
+        .card.flipped .card-content,
+        .card.matched .card-content {
+            display: block;
+        }
+
+        .card.flipped .card-back,
+        .card.matched .card-back {
+            display: none;
+        }
+
+        .card-back {
+            color: white;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin: 5px;
+        }
+
+        button:hover {
+            background: #5a67d8;
+        }
+
+        .button-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .message {
+            text-align: center;
+            padding: 15px;
+            background: #e8f5e9;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 18px;
+            color: #2e7d32;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .level-indicator {
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 20px;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        @media (max-width: 600px) {
+            .game-board {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            
+            .card {
+                font-size: 24px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+        }
+
+        .instructions {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .instructions h2 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .victory-screen {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .victory-screen h2 {
+            color: #4CAF50;
+            font-size: 32px;
+            margin-bottom: 20px;
+        }
+
+        .trophy {
+            font-size: 80px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <!-- Language Bar (Always Visible) -->
+        <div class="language-bar">
+            <button class="lang-btn active" id="enBtn" onclick="setLanguage('en')">English</button>
+            <button class="lang-btn" id="fiBtn" onclick="setLanguage('fi')">Suomi</button>
+        </div>
+
+        <!-- Start Screen -->
+        <div id="startScreen">
+            <h1 id="gameTitle">🎮 Bible Memory Match</h1>
+            <div class="instructions">
+                <h2 id="welcomeTitle">Welcome to Daniel's Memory Challenge!</h2>
+                <p id="instruction1">📖 Match pairs of Bible symbols and stories from Daniel's journey.</p>
+                <p id="instruction2">🎯 Find all matching pairs to complete each level.</p>
+                <p id="instruction3">⭐ Complete all 3 levels to become a Bible Memory Champion!</p>
+                <p id="instruction4">💡 Fewer moves = Higher score!</p>
+            </div>
+            <div class="button-container">
+                <button id="startGameBtn" onclick="startGame()">Start Game</button>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="gameScreen" class="hidden">
+            <h1 id="gameTitlePlay">Bible Memory Match</h1>
+            <div class="level-indicator" id="levelIndicator">Level 1: The Palace</div>
+            
+            <div class="score-board">
+                <div class="score-item">
+                    <div class="score-label" id="movesLabel">Moves</div>
+                    <div class="score-value" id="moves">0</div>
+                </div>
+                <div class="score-item">
+                    <div class="score-label" id="matchesLabel">Matches</div>
+                    <div class="score-value" id="matches">0</div>
+                </div>
+                <div class="score-item">
+                    <div class="score-label" id="scoreLabel">Score</div>
+                    <div class="score-value" id="score">0</div>
+                </div>
+            </div>
+
+            <div id="message" class="message hidden"></div>
+            
+            <div class="game-board" id="gameBoard"></div>
+            
+            <div class="button-container">
+                <button id="resetBtn" onclick="resetLevel()">Reset Level</button>
+                <button id="menuBtn" onclick="showStart()">Main Menu</button>
+            </div>
+        </div>
+
+        <!-- Victory Screen -->
+        <div id="victoryScreen" class="hidden">
+            <div class="victory-screen">
+                <h2 id="congratsText">🎉 Congratulations! 🎉</h2>
+                <div class="trophy">🏆</div>
+                <h3 id="championText">You are a Bible Memory Champion!</h3>
+                <div class="score-board">
+                    <div class="score-item">
+                        <div class="score-label" id="totalMovesLabel">Total Moves</div>
+                        <div class="score-value" id="totalMoves">0</div>
+                    </div>
+                    <div class="score-item">
+                        <div class="score-label" id="finalScoreLabel">Final Score</div>
+                        <div class="score-value" id="finalScore">0</div>
+                    </div>
+                </div>
+                <p id="victoryMessage" style="margin: 20px 0; color: #666;">
+                    You've completed Daniel's journey and mastered all the memory challenges!
+                </p>
+                <div class="button-container">
+                    <button id="playAgainBtn" onclick="startGame()">Play Again</button>
+                    <button id="menuBtn2" onclick="showStart()">Main Menu</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game variables
+        var currentLevel = 1;
+        var moves = 0;
+        var matches = 0;
+        var score = 0;
+        var totalMoves = 0;
+        var flippedCards = [];
+        var matchedPairs = 0;
+        var canFlip = true;
+        var currentLanguage = 'en';
+
+        // Translations
+        var translations = {
+            en: {
+                gameTitle: "🎮 Bible Memory Match",
+                gameTitlePlay: "Bible Memory Match",
+                welcomeTitle: "Welcome to Daniel's Memory Challenge!",
+                instruction1: "📖 Match pairs of Bible symbols and stories from Daniel's journey.",
+                instruction2: "🎯 Find all matching pairs to complete each level.",
+                instruction3: "⭐ Complete all 3 levels to become a Bible Memory Champion!",
+                instruction4: "💡 Fewer moves = Higher score!",
+                startGameBtn: "Start Game",
+                movesLabel: "Moves",
+                matchesLabel: "Matches",
+                scoreLabel: "Score",
+                resetBtn: "Reset Level",
+                menuBtn: "Main Menu",
+                congratsText: "🎉 Congratulations! 🎉",
+                championText: "You are a Bible Memory Champion!",
+                totalMovesLabel: "Total Moves",
+                finalScoreLabel: "Final Score",
+                victoryMessage: "You've completed Daniel's journey and mastered all the memory challenges!",
+                playAgainBtn: "Play Again",
+                level: "Level",
+                levelNames: {
+                    1: "The Palace",
+                    2: "The Furnace",
+                    3: "The Lions' Den"
+                },
+                matchMessage: "Match all pairs to complete the level!",
+                levelCompleteMessage: "Level Complete! Well done!",
+                gameCompleteMessage: "Game Complete! Amazing!"
+            },
+            fi: {
+                gameTitle: "🎮 Raamatun Muistipeli",
+                gameTitlePlay: "Raamatun Muistipeli",
+                welcomeTitle: "Tervetuloa Danielin Muistihaasteeseen!",
+                instruction1: "📖 Yhdistä Raamatun symboliparit Danielin matkalta.",
+                instruction2: "🎯 Löydä kaikki parit suorittaaksesi tason.",
+                instruction3: "⭐ Suorita kaikki 3 tasoa tullaksesi Raamatun Muistimestariksi!",
+                instruction4: "💡 Vähemmän siirtoja = Enemmän pisteitä!",
+                startGameBtn: "Aloita Peli",
+                movesLabel: "Siirrot",
+                matchesLabel: "Parit",
+                scoreLabel: "Pisteet",
+                resetBtn: "Aloita Taso Alusta",
+                menuBtn: "Päävalikko",
+                congratsText: "🎉 Onnittelut! 🎉",
+                championText: "Olet Raamatun Muistimestari!",
+                totalMovesLabel: "Siirrot Yhteensä",
+                finalScoreLabel: "Lopputulos",
+                victoryMessage: "Olet suorittanut Danielin matkan ja voittanut kaikki muistihaasteet!",
+                playAgainBtn: "Pelaa Uudelleen",
+                level: "Taso",
+                levelNames: {
+                    1: "Palatsi",
+                    2: "Tulinen Pätsi",
+                    3: "Leijonien Luola"
+                },
+                matchMessage: "Yhdistä kaikki parit suorittaaksesi tason!",
+                levelCompleteMessage: "Taso Suoritettu! Hyvin tehty!",
+                gameCompleteMessage: "Peli Suoritettu! Mahtavaa!"
+            }
+        };
+
+        // Level data
+        var levels = {
+            1: {
+                nameEn: "The Palace",
+                nameFi: "Palatsi",
+                pairs: [
+                    {icon: "🍇", name: "grapes"},
+                    {icon: "🥦", name: "vegetables"},
+                    {icon: "👑", name: "crown"},
+                    {icon: "🏰", name: "palace"},
+                    {icon: "📜", name: "scroll"},
+                    {icon: "🙏", name: "prayer"}
+                ]
+            },
+            2: {
+                nameEn: "The Furnace",
+                nameFi: "Tulinen Pätsi",
+                pairs: [
+                    {icon: "🔥", name: "fire"},
+                    {icon: "🗿", name: "statue"},
+                    {icon: "👼", name: "angel"},
+                    {icon: "🛡️", name: "shield"},
+                    {icon: "🎺", name: "trumpet"},
+                    {icon: "💪", name: "strength"},
+                    {icon: "✨", name: "miracle"},
+                    {icon: "🌟", name: "star"}
+                ]
+            },
+            3: {
+                nameEn: "The Lions' Den",
+                nameFi: "Leijonien Luola",
+                pairs: [
+                    {icon: "🦁", name: "lion"},
+                    {icon: "🌙", name: "night"},
+                    {icon: "⭐", name: "star"},
+                    {icon: "🕊️", name: "dove"},
+                    {icon: "⚖️", name: "justice"},
+                    {icon: "📖", name: "bible"},
+                    {icon: "🗝️", name: "key"},
+                    {icon: "💝", name: "faith"},
+                    {icon: "🏆", name: "victory"},
+                    {icon: "☀️", name: "morning"}
+                ]
+            }
+        };
+
+        // Set language
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            var t = translations[lang];
+            
+            // Update active button
+            if (lang === 'en') {
+                document.getElementById('enBtn').classList.add('active');
+                document.getElementById('fiBtn').classList.remove('active');
+            } else {
+                document.getElementById('fiBtn').classList.add('active');
+                document.getElementById('enBtn').classList.remove('active');
+            }
+            
+            // Update all text
+            document.getElementById('gameTitle').textContent = t.gameTitle;
+            document.getElementById('gameTitlePlay').textContent = t.gameTitlePlay;
+            document.getElementById('welcomeTitle').textContent = t.welcomeTitle;
+            document.getElementById('instruction1').textContent = t.instruction1;
+            document.getElementById('instruction2').textContent = t.instruction2;
+            document.getElementById('instruction3').textContent = t.instruction3;
+            document.getElementById('instruction4').textContent = t.instruction4;
+            document.getElementById('startGameBtn').textContent = t.startGameBtn;
+            document.getElementById('movesLabel').textContent = t.movesLabel;
+            document.getElementById('matchesLabel').textContent = t.matchesLabel;
+            document.getElementById('scoreLabel').textContent = t.scoreLabel;
+            document.getElementById('resetBtn').textContent = t.resetBtn;
+            document.getElementById('menuBtn').textContent = t.menuBtn;
+            document.getElementById('menuBtn2').textContent = t.menuBtn;
+            document.getElementById('congratsText').textContent = t.congratsText;
+            document.getElementById('championText').textContent = t.championText;
+            document.getElementById('totalMovesLabel').textContent = t.totalMovesLabel;
+            document.getElementById('finalScoreLabel').textContent = t.finalScoreLabel;
+            document.getElementById('victoryMessage').textContent = t.victoryMessage;
+            document.getElementById('playAgainBtn').textContent = t.playAgainBtn;
+            
+            // Update level indicator if in game
+            updateLevelIndicator();
+        }
+
+        // Update level indicator
+        function updateLevelIndicator() {
+            var t = translations[currentLanguage];
+            var levelName = currentLanguage === 'en' ? levels[currentLevel].nameEn : levels[currentLevel].nameFi;
+            document.getElementById('levelIndicator').textContent = 
+                t.level + ' ' + currentLevel + ': ' + levelName;
+        }
+
+        // Show start screen
+        function showStart() {
+            document.getElementById('startScreen').classList.remove('hidden');
+            document.getElementById('gameScreen').classList.add('hidden');
+            document.getElementById('victoryScreen').classList.add('hidden');
+        }
+
+        // Start game
+        function startGame() {
+            currentLevel = 1;
+            totalMoves = 0;
+            score = 0;
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('gameScreen').classList.remove('hidden');
+            document.getElementById('victoryScreen').classList.add('hidden');
+            initLevel();
+        }
+
+        // Initialize level
+        function initLevel() {
+            moves = 0;
+            matches = 0;
+            matchedPairs = 0;
+            flippedCards = [];
+            canFlip = true;
+            
+            updateDisplay();
+            createBoard();
+            updateLevelIndicator();
+            
+            var t = translations[currentLanguage];
+            showMessage(t.matchMessage, 'info');
+        }
+
+        // Create game board
+        function createBoard() {
+            var board = document.getElementById('gameBoard');
+            board.innerHTML = '';
+            
+            var levelData = levels[currentLevel].pairs;
+            var cards = [];
+            
+            // Create pairs
+            for (var i = 0; i < levelData.length; i++) {
+                cards.push({icon: levelData[i].icon, name: levelData[i].name, id: i + 'a'});
+                cards.push({icon: levelData[i].icon, name: levelData[i].name, id: i + 'b'});
+            }
+            
+            // Shuffle cards
+            cards = shuffleArray(cards);
+            
+            // Create card elements
+            for (var j = 0; j < cards.length; j++) {
+                var cardElement = document.createElement('div');
+                cardElement.className = 'card';
+                cardElement.dataset.icon = cards[j].icon;
+                cardElement.dataset.name = cards[j].name;
+                cardElement.dataset.id = cards[j].id;
+                cardElement.onclick = function() { flipCard(this); };
+                
+                cardElement.innerHTML = 
+                    '<span class="card-back">?</span>' +
+                    '<span class="card-content">' + cards[j].icon + '</span>';
+                
+                board.appendChild(cardElement);
+            }
+        }
+
+        // Shuffle array
+        function shuffleArray(array) {
+            var newArray = array.slice();
+            for (var i = newArray.length - 1; i > 0; i--) {
+                var j = Math.floor(Math.random() * (i + 1));
+                var temp = newArray[i];
+                newArray[i] = newArray[j];
+                newArray[j] = temp;
+            }
+            return newArray;
+        }
+
+        // Flip card
+        function flipCard(card) {
+            if (!canFlip) return;
+            if (card.classList.contains('flipped')) return;
+            if (card.classList.contains('matched')) return;
+            if (flippedCards.length >= 2) return;
+            
+            card.classList.add('flipped');
+            flippedCards.push(card);
+            
+            if (flippedCards.length === 2) {
+                moves++;
+                updateDisplay();
+                checkMatch();
+            }
+        }
+
+        // Check for match
+        function checkMatch() {
+            canFlip = false;
+            var card1 = flippedCards[0];
+            var card2 = flippedCards[1];
+            
+            if (card1.dataset.name === card2.dataset.name) {
+                // Match found!
+                setTimeout(function() {
+                    card1.classList.add('matched');
+                    card2.classList.add('matched');
+                    card1.classList.remove('flipped');
+                    card2.classList.remove('flipped');
+                    matches++;
+                    matchedPairs++;
+                    score += Math.max(100 - moves * 2, 10);
+                    updateDisplay();
+                    flippedCards = [];
+                    canFlip = true;
+                    
+                    // Check if level complete
+                    if (matchedPairs === levels[currentLevel].pairs.length) {
+                        levelComplete();
+                    }
+                }, 500);
+            } else {
+                // No match
+                setTimeout(function() {
+                    card1.classList.remove('flipped');
+                    card2.classList.remove('flipped');
+                    flippedCards = [];
+                    canFlip = true;
+                }, 1000);
+            }
+        }
+
+        // Level complete
+        function levelComplete() {
+            totalMoves += moves;
+            var t = translations[currentLanguage];
+            showMessage(t.levelCompleteMessage, 'success');
+            
+            setTimeout(function() {
+                if (currentLevel < 3) {
+                    currentLevel++;
+                    initLevel();
+                } else {
+                    // Game complete!
+                    gameComplete();
+                }
+            }, 2000);
+        }
+
+        // Game complete
+        function gameComplete() {
+            document.getElementById('gameScreen').classList.add('hidden');
+            document.getElementById('victoryScreen').classList.remove('hidden');
+            document.getElementById('totalMoves').textContent = totalMoves;
+            document.getElementById('finalScore').textContent = score;
+        }
+
+        // Reset current level
+        function resetLevel() {
+            initLevel();
+        }
+
+        // Update display
+        function updateDisplay() {
+            document.getElementById('moves').textContent = moves;
+            document.getElementById('matches').textContent = matches;
+            document.getElementById('score').textContent = score;
+        }
+
+        // Show message
+        function showMessage(text, type) {
+            var messageEl = document.getElementById('message');
+            messageEl.textContent = text;
+            messageEl.classList.remove('hidden');
+            
+            if (type === 'success') {
+                messageEl.style.background = '#e8f5e9';
+                messageEl.style.color = '#2e7d32';
+            } else {
+                messageEl.style.background = '#e3f2fd';
+                messageEl.style.color = '#1976d2';
+            }
+            
+            setTimeout(function() {
+                messageEl.classList.add('hidden');
+            }, 3000);
+        }
+
+        // Initialize on load
+        window.onload = function() {
+            setLanguage('en');
+        };
+    </script>
+</body>
+</html>
